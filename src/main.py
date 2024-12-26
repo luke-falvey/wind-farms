@@ -78,7 +78,15 @@ async def qualify_address(request: Request):
 
 routes = [Route("/address/qualify", endpoint=qualify_address, methods=["POST"])]
 
-middleware = [Middleware(CORSMiddleware, allow_origins=["*"])]
+middleware = [
+    Middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+]
 
 
 if __name__ == "__main__":
