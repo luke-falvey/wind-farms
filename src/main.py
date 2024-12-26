@@ -1,6 +1,7 @@
 import math
 import copy
 import os
+import contextlib
 
 from starlette.applications import Starlette
 from starlette.requests import Request
@@ -49,14 +50,14 @@ def measure_distance(point1: Coordinate, point2: Coordinate):
 
 
 async def qualify_address(request: Request):
+    google_maps_client: GoogleMapsClient = request.state.google_maps_client
+
     json_body = await request.json()
     address = json_body.get("address")
     if address is None:
         return JSONResponse({"error": "An address was not supplied"})
 
-    # TODO: Factor our client initializer to a startup function
-    client = GoogleMapsClient(GOOGLE_MAPS_API_KEY)
-    address_coordinate = client.geocode(address)
+    address_coordinate = await google_maps_client.geocode(address)
 
     qualifying_facilities = []
     for facility in FACILITIES:
@@ -89,6 +90,16 @@ middleware = [
 ]
 
 
+@contextlib.asynccontextmanager
+async def lifespan(app):
+    async with GoogleMapsClient(GOOGLE_MAPS_API_KEY) as client:
+        yield {"google_maps_client": client}
+
+
 if __name__ == "__main__":
-    app = Starlette(routes=routes, middleware=middleware)
+    app = Starlette(
+        routes=routes,
+        middleware=middleware,
+        lifespan=lifespan,
+    )
     uvicorn.run(app, host="0.0.0.0", port=5000, log_level="info")
