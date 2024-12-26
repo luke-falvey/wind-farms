@@ -12,7 +12,12 @@ from starlette.middleware.cors import CORSMiddleware
 
 import uvicorn
 
-from clients.maps import GoogleMapsClient, Coordinate
+from clients.maps import (
+    GoogleMapsClient,
+    Coordinate,
+    AddressNotFound,
+    MultipleAddressesFound,
+)
 
 QUALIFYING_DISTANCE_METERS = 10_000
 FACILITIES = [
@@ -57,7 +62,12 @@ async def qualify_address(request: Request):
     if address is None:
         return JSONResponse({"error": "An address was not supplied"})
 
-    address_coordinate = await google_maps_client.geocode(address)
+    try:
+        address_coordinate = await google_maps_client.geocode(address)
+    except AddressNotFound:
+        return JSONResponse({"error": "An address was not found"}, status_code=404)
+    except MultipleAddressesFound:
+        return JSONResponse({"error": "Multiple addresses were found"}, status_code=422)
 
     qualifying_facilities = []
     for facility in FACILITIES:

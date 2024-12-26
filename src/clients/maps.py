@@ -2,8 +2,15 @@ from collections import namedtuple
 
 import aiohttp
 
-MAPS_URL = "https://maps.googleapis.com"
 Coordinate = namedtuple("Coordinate", field_names=["lat", "long"])
+
+
+class AddressNotFound(ValueError):
+    pass
+
+
+class MultipleAddressesFound(ValueError):
+    pass
 
 
 class GoogleMapsClient:
@@ -11,7 +18,7 @@ class GoogleMapsClient:
         self._api_key = api_key
 
     async def __aenter__(self):
-        self._session = aiohttp.ClientSession(base_url=MAPS_URL)
+        self._session = aiohttp.ClientSession(base_url="https://maps.googleapis.com")
         return self
 
     async def __aexit__(self, exc_type, exc_value, exc_tb):
@@ -25,12 +32,11 @@ class GoogleMapsClient:
         )
         json_body = await response.json()
         results = json_body["results"]
-        if len(results) != 1:
-            # TODO:
-            # len(results) == 0 -> return address not found (404)
-            # len(results) > 1 -> return ambigous address error ()
-            raise NotImplementedError()
-
-        address_response = results[0]
-        location = address_response["geometry"]["location"]
-        return Coordinate(location["lat"], location["lng"])
+        if len(results) == 0:
+            raise AddressNotFound
+        elif len(results) == 1:
+            address_response = results[0]
+            location = address_response["geometry"]["location"]
+            return Coordinate(location["lat"], location["lng"])
+        else:
+            raise MultipleAddressesFound
