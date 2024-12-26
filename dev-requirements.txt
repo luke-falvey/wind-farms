@@ -1,0 +1,5 @@
+# Install run-time requirements
+-r requirements.txt
+
+pytest
+httpx

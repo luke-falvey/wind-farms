@@ -1,0 +1,1 @@
+curl -X POST http://localhost:5000/address/qualify -d '{"address": "5 Fahey St, Wonthaggi VIC 3995"}'
