@@ -6,6 +6,9 @@ from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.routing import Route
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
+
 import uvicorn
 
 from clients.maps import GoogleMapsClient, Coordinate
@@ -75,7 +78,9 @@ async def qualify_address(request: Request):
 
 routes = [Route("/address/qualify", endpoint=qualify_address, methods=["POST"])]
 
+middleware = [Middleware(CORSMiddleware, allow_origins=["*"])]
+
 
 if __name__ == "__main__":
-    app = Starlette(routes=routes)
+    app = Starlette(routes=routes, middleware=middleware)
     uvicorn.run(app, host="0.0.0.0", port=5000, log_level="info")
